@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Finansal Düzen</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">₺</span>
+      <h1>Finansal Düzen</h1>
+    </div>
+    <div class="month-nav">
+      <button id="prevMonth" class="icon-btn" aria-label="Önceki ay">‹</button>
+      <input type="month" id="monthPicker" aria-label="Ay seç">
+      <button id="nextMonth" class="icon-btn" aria-label="Sonraki ay">›</button>
+    </div>
+    <div class="topbar-actions">
+      <button id="exportBtn" class="btn ghost">Dışa aktar</button>
+      <label class="btn ghost" for="importFile">İçe aktar</label>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Özet kartları -->
+    <section class="tiles" aria-label="Aylık özet">
+      <article class="tile">
+        <span class="tile-label">Gelir</span>
+        <strong class="tile-value" id="sumIncome">₺0</strong>
+      </article>
+      <article class="tile">
+        <span class="tile-label">Gider</span>
+        <strong class="tile-value" id="sumExpense">₺0</strong>
+      </article>
+      <article class="tile">
+        <span class="tile-label">Net</span>
+        <strong class="tile-value" id="sumNet">₺0</strong>
+        <span class="tile-sub" id="savingsRate">Tasarruf oranı —</span>
+      </article>
+      <article class="tile">
+        <span class="tile-label">Bütçe kalan</span>
+        <strong class="tile-value" id="budgetLeft">—</strong>
+        <div class="meter" aria-hidden="true"><div class="meter-fill" id="budgetMeter"></div></div>
+        <span class="tile-sub" id="budgetSub">Bütçe belirlenmedi</span>
+      </article>
+    </section>
+
+    <div class="columns">
+      <!-- Sol: işlem ekle + liste -->
+      <section class="card">
+        <h2>İşlem ekle</h2>
+        <form id="txForm" class="form-grid">
+          <div class="seg" role="radiogroup" aria-label="İşlem türü">
+            <label><input type="radio" name="type" value="expense" checked><span>Gider</span></label>
+            <label><input type="radio" name="type" value="income"><span>Gelir</span></label>
+          </div>
+          <label class="field">
+            <span>Tutar (₺)</span>
+            <input type="number" name="amount" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
+          </label>
+          <label class="field">
+            <span>Tarih</span>
+            <input type="date" name="date" required>
+          </label>
+          <label class="field">
+            <span>Kategori</span>
+            <select name="category" id="categorySelect"></select>
+          </label>
+          <label class="field field-wide">
+            <span>Açıklama</span>
+            <input type="text" name="note" maxlength="80" placeholder="Market, kira, maaş…">
+          </label>
+          <button type="submit" class="btn primary field-wide">Kaydet</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Bu ayın işlemleri</h2>
+          <input type="search" id="txSearch" placeholder="Ara…" aria-label="İşlemlerde ara">
+        </div>
+        <table class="tx-table">
+          <thead>
+            <tr><th>Tarih</th><th>Açıklama</th><th>Kategori</th><th class="num">Tutar</th><th></th></tr>
+          </thead>
+          <tbody id="txBody"></tbody>
+        </table>
+        <p class="empty" id="txEmpty">Bu ay için henüz işlem yok.</p>
+      </section>
+    </div>
+
+    <div class="columns">
+      <!-- Kategori dağılımı -->
+      <section class="card">
+        <h2>Gider dağılımı</h2>
+        <ul class="bars" id="categoryBars"></ul>
+        <p class="empty" id="catEmpty">Gider girildiğinde dağılım burada görünür.</p>
+      </section>
+
+      <!-- Bütçe & hedef -->
+      <section class="card">
+        <h2>Bütçe ve hedef</h2>
+        <form id="settingsForm" class="form-grid">
+          <label class="field">
+            <span>Aylık gider bütçesi (₺)</span>
+            <input type="number" name="budget" min="0" step="1" placeholder="Örn. 25000">
+          </label>
+          <label class="field">
+            <span>Birikim hedefi (₺)</span>
+            <input type="number" name="goal" min="0" step="1" placeholder="Örn. 100000">
+          </label>
+          <label class="field">
+            <span>Mevcut birikim (₺)</span>
+            <input type="number" name="saved" min="0" step="1" placeholder="0">
+          </label>
+          <button type="submit" class="btn field-wide">Güncelle</button>
+        </form>
+        <div class="goal">
+          <div class="goal-head"><span>Hedefe ilerleme</span><strong id="goalPct">—</strong></div>
+          <div class="meter"><div class="meter-fill" id="goalMeter"></div></div>
+          <span class="tile-sub" id="goalSub"></span>
+        </div>
+      </section>
+    </div>
+
+    <!-- Sabit giderler -->
+    <section class="card">
+      <div class="card-head">
+        <h2>Sabit giderler ve abonelikler</h2>
+        <strong id="fixedTotal" class="muted">₺0 / ay</strong>
+      </div>
+      <form id="fixedForm" class="inline-form">
+        <input type="text" name="name" placeholder="Kira, internet, Spotify…" maxlength="40" required>
+        <input type="number" name="amount" min="0" step="0.01" placeholder="Tutar" required>
+        <input type="number" name="day" min="1" max="31" placeholder="Gün" title="Ayın kaçıncı günü">
+        <button type="submit" class="btn">Ekle</button>
+      </form>
+      <ul class="fixed-list" id="fixedList"></ul>
+      <p class="empty" id="fixedEmpty">Henüz sabit gider eklenmedi.</p>
+      <button id="applyFixed" class="btn ghost">Bu aya sabit giderleri işle</button>
+    </section>
+  </main>
+
+  <footer class="foot">Veriler yalnızca bu tarayıcıda saklanır. Yedek için "Dışa aktar" kullanın.</footer>
+  <script src="app.js"></script>
+</body>
+</html>
